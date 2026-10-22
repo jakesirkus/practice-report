@@ -1760,11 +1760,23 @@
       var n = String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[.'’"]/g,"").replace(/\b(jr|sr|ii|iii|iv|v)\b/g,"").replace(/-/g," ").replace(/\s+/g," ").trim();
       return NALIAS[n] || n;
     }
+    // Fallback name matching is strict: same last name AND a compatible first name
+    // (same name, a 3+ letter prefix like Cam/Camryn, a known nickname, or initials like JT).
+    var NICK = {mike:"michael", rob:"robert", bob:"robert", andy:"andres", gabe:"gabriel", jake:"jacob", juju:"julius", que:"quandarrius", johnny:"jerzhan", tony:"anthony", tom:"thomas", bill:"william", dan:"daniel", nate:"nathan", zeke:"ezekiel", sam:"samuel", alex:"alexander", nick:"nicholas", matt:"matthew", chris:"christopher"};
+    function firstOk(f1, f2, l1, l2){
+      if(f1 === f2) return true;
+      var s = f1.length <= f2.length ? f1 : f2, L = s === f1 ? f2 : f1;
+      if(s.length >= 3 && L.indexOf(s) === 0) return true;
+      if(NICK[f1] === f2 || NICK[f2] === f1 || (NICK[f1] && NICK[f1] === NICK[f2])) return true;
+      if(f1.length === 2 && f1 === f2[0] + l2[0]) return true;
+      if(f2.length === 2 && f2 === f1[0] + l1[0]) return true;
+      return false;
+    }
     function findIn(map, name){
       var k = nkey(name); if(map[k]) return map[k];
-      var parts = k.split(" "), last = parts[parts.length-1], fi = parts[0][0];
+      var parts = k.split(" "), last = parts[parts.length-1], first = parts[0];
       var hit = null, cnt = 0;
-      Object.keys(map).forEach(function(mk){ var q = mk.split(" "); if(q[q.length-1] === last && q[0][0] === fi){ hit = map[mk]; cnt++; } });
+      Object.keys(map).forEach(function(mk){ var q = mk.split(" "); if(q.length > 1 && q[q.length-1] === last && firstOk(first, q[0], parts[1] || "", q[1] || "")){ hit = map[mk]; cnt++; } });
       return cnt === 1 ? hit : null;
     }
 
@@ -1884,9 +1896,17 @@
         return '<span class="wcell l'+lvl+'" title="Week '+wk+': '+v+' of '+tot+' snaps ('+pct+'%)'+det+'">'+(pct||'0')+'</span>';
       }).join('') + '</span>';
     }
+    // A same-named player still on another team's depth chart is a different person, so his snaps are never borrowed.
+    var ROSTER = {};
+    function onRoster(t, k){
+      if(!ROSTER[t]){ var set = {}, d = DEPTH.teams[t] || {units:{}};
+        Object.keys(d.units || {}).forEach(function(u){ d.units[u].forEach(function(j){ j.p.forEach(function(p){ set[nkey(p[1])] = 1; }); }); });
+        (d.unav || []).forEach(function(u){ set[nkey(u[1])] = 1; }); ROSTER[t] = set; }
+      return !!ROSTER[t][k];
+    }
     function snapSummary(a, name, unit, tdPct){
       var rec = snapRec(a, name), sa = a, from = '';
-      if(!rec){ var k = nkey(name), hits = Object.keys(DEPTH.snaps).filter(function(t){ return t !== a && DEPTH.snaps[t][k]; });
+      if(!rec){ var k = nkey(name), hits = Object.keys(DEPTH.snaps).filter(function(t){ return t !== a && DEPTH.snaps[t][k] && !onRoster(t, k); });
         if(hits.length === 1){ sa = hits[0]; rec = DEPTH.snaps[sa][k]; from = sa; } }
       var sp = rec ? seasonPct(sa, rec, unit) : null;
       var pctTxt = sp !== null ? sp + '% snaps' + (from ? ' with ' + from : '') : (tdPct ? tdPct + '% snaps (TwoDeep)' : 'no snaps yet');
