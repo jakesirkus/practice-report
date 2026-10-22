@@ -500,9 +500,12 @@
   .dbadge.pr-dnp{background:var(--status-dnp);} .dbadge.pr-limited{background:var(--status-limited);} .dbadge.pr-full{background:var(--status-full);} .dbadge.pr-rest{background:var(--status-rest);}
   .dbadge.win{background:var(--accent); color:var(--accent-contrast);} .dbadge.res{background:var(--text-muted);} .dbadge.news{background:var(--surface-alt); color:var(--text); border:1px solid var(--border);}
   .dps{color:var(--text-muted);}
-  .dunav{margin-top:14px; padding:10px 12px; background:var(--surface); border:1px solid var(--border); border-radius:10px; display:flex; flex-wrap:wrap; gap:6px 14px;}
+  .dunav{margin-top:14px; padding:10px 12px; background:var(--surface); border:1px solid var(--border); border-radius:10px;}
   .dunav .reserve-head{width:100%;}
-  .dun{font-size:12px; display:inline-flex; align-items:center; gap:4px;}
+  .dun{display:flex; flex-wrap:wrap; align-items:center; gap:4px 14px; padding:6px 0; border-top:1px solid var(--border); font-size:12px;}
+  .dun:first-of-type{border-top:0;}
+  .dun .dname{min-width:210px; flex:0 1 260px;}
+  .dun .dsnap{margin-top:0;}
   .dlegend{margin-top:10px; line-height:1.5;}
   .mstrip{display:inline-flex; gap:2px; vertical-align:middle;}
   .mpill{width:15px; height:15px; border-radius:3px; display:inline-flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:8px; font-weight:700; color:var(--text-muted); background:var(--surface-alt); border:1px solid var(--border); cursor:help;}
@@ -1881,14 +1884,20 @@
         return '<span class="wcell l'+lvl+'" title="Week '+wk+': '+v+' of '+tot+' snaps ('+pct+'%)'+det+'">'+(pct||'0')+'</span>';
       }).join('') + '</span>';
     }
+    function snapSummary(a, name, unit, tdPct){
+      var rec = snapRec(a, name), sa = a, from = '';
+      if(!rec){ var k = nkey(name), hits = Object.keys(DEPTH.snaps).filter(function(t){ return t !== a && DEPTH.snaps[t][k]; });
+        if(hits.length === 1){ sa = hits[0]; rec = DEPTH.snaps[sa][k]; from = sa; } }
+      var sp = rec ? seasonPct(sa, rec, unit) : null;
+      var pctTxt = sp !== null ? sp + '% snaps' + (from ? ' with ' + from : '') : (tdPct ? tdPct + '% snaps (TwoDeep)' : 'no snaps yet');
+      if(rec && rec.x && unit !== "S"){ var tr = 0, tp = 0; Object.keys(rec.x).forEach(function(wk){ tr += rec.x[wk][0]; tp += rec.x[wk][3]; }); if(unit === "O" && tr >= 10) pctTxt += ' · ' + tr + ' routes'; if(unit === "D" && tp >= 10) pctTxt += ' · ' + tp + ' rushes'; }
+      return { sp: sp, html: '<span class="dpct"'+(from ? ' title="No snaps with '+a+' yet; season share and week cells are from his time with '+from+'"' : '')+'>'+pctTxt+'</span>' + (rec || sp !== null ? weekStrip(sa, rec, unit) : '') };
+    }
     function playerCell(a, pl, unit){
       if(!pl) return '<td class="dcell empty">—</td>';
-      var num = pl[0], name = pl[1], tdPct = pl[3];
-      var rec = snapRec(a, name), sp = rec ? seasonPct(a, rec, unit) : null;
-      var pctTxt = sp !== null ? sp + '% snaps' : (tdPct ? tdPct + '% snaps (TwoDeep)' : 'no snaps yet');
-      if(rec && rec.x && unit !== "S"){ var tr = 0, tp = 0; Object.keys(rec.x).forEach(function(wk){ tr += rec.x[wk][0]; tp += rec.x[wk][3]; }); if(unit === "O" && tr >= 10) pctTxt += ' · ' + tr + ' routes'; if(unit === "D" && tp >= 10) pctTxt += ' · ' + tp + ' rushes'; }
+      var num = pl[0], name = pl[1], ss = snapSummary(a, name, unit, pl[3]);
       return '<td class="dcell"><div class="dname">' + (num ? '<span class="dnum">'+esc(num)+'</span>' : '') + plink(a, name) + injBadge(a, name) + '</div>' +
-        '<div class="dsnap"><span class="dpct">'+pctTxt+'</span>' + (rec || sp !== null ? weekStrip(a, rec, unit) : '') + '</div></td>';
+        '<div class="dsnap">' + ss.html + '</div></td>';
     }
 
     // ---- controls ----
@@ -1920,10 +1929,13 @@
           '<td class="dcell dextra">'+(extra || '—')+'</td></tr>';
       });
       html += '</tbody></table></div>';
-      var un = (d.unav || []).filter(function(u){ return u[3] === curUnit; });
+      var un = (d.unav || []).filter(function(u){ return u[3] === curUnit; })
+        .map(function(u){ return { u: u, ss: snapSummary(a, u[1], curUnit) }; })
+        .sort(function(x, y){ return (y.ss.sp || 0) - (x.ss.sp || 0); });
       if(un.length){
-        html += '<div class="dunav"><div class="reserve-head"><span>Unavailable (TwoDeep)</span><span class="rcount">'+un.length+'</span></div>' +
-          un.map(function(u){ var bd = injBadge(a, u[1]); return '<span class="dun">'+(u[0]?'<span class="dnum">'+esc(u[0])+'</span>':'')+plink(a, u[1])+(bd || (u[2]?' <span class="lpill" title="TwoDeep tag">'+esc(u[2])+'</span>':''))+'</span>'; }).join('') + '</div>';
+        html += '<div class="dunav"><div class="reserve-head"><span>Unavailable (TwoDeep) · sorted by season snap share</span><span class="rcount">'+un.length+'</span></div>' +
+          un.map(function(o){ var u = o.u, bd = injBadge(a, u[1]);
+            return '<div class="dun"><div class="dname">'+(u[0]?'<span class="dnum">'+esc(u[0])+'</span>':'')+plink(a, u[1])+(bd || (u[2]?' <span class="lpill" title="TwoDeep tag">'+esc(u[2])+'</span>':''))+'</div><div class="dsnap">'+o.ss.html+'</div></div>'; }).join('') + '</div>';
       }
       html += '<p class="dmeta dlegend">Week cells = share of the team\'s '+(curUnit==="S"?'special-teams':curUnit==="O"?'offensive':'defensive')+' snaps that game (Wk '+DEPTH.weeks[0]+'–'+DEPTH.weeks[DEPTH.weeks.length-1]+'; – = bye; hover a cell for routes / blocking / pass-rush / coverage splits). Next to each name on this week\'s report: practice days (green = full, blue = limited, red = DNP, purple = rest, grey = not yet reported) plus OUT / DOUBT / QUES or his reserve list, live from the injury report. Hover (or tap) any name for his full injury status.</p>';
       out.innerHTML = html;
