@@ -13,7 +13,7 @@
     --accent:#2d4a8a;
     --accent-contrast:#ffffff;
     --status-full:#2f7a4f;
-    --status-limited:#5a6b8c;
+    --status-limited:#e8b913;
     --status-dnp:#a4402f;
     --status-rest:#6a5fa0;
     --status-out:#c62f2f;
@@ -34,7 +34,7 @@
       --accent:#7fa0ea;
       --accent-contrast:#0d1117;
       --status-full:#57b57e;
-      --status-limited:#93a6cc;
+      --status-limited:#f4d03f;
       --status-dnp:#d9776a;
       --status-rest:#a79ce0;
       --status-out:#ef5350;
@@ -55,7 +55,7 @@
     --accent:#7fa0ea;
     --accent-contrast:#0d1117;
     --status-full:#57b57e;
-    --status-limited:#93a6cc;
+    --status-limited:#f4d03f;
     --status-dnp:#d9776a;
     --status-rest:#a79ce0;
     --status-out:#ef5350;
@@ -290,7 +290,7 @@
     border:1px solid var(--border);
   }
   .daypill.full{background:var(--status-full); color:#fff; border-color:transparent;}
-  .daypill.limited{background:var(--status-limited); color:#fff; border-color:transparent;}
+  .daypill.limited{background:var(--status-limited); color:#2a2200; border-color:transparent;}
   .daypill.dnp{background:var(--status-dnp); color:#fff; border-color:transparent;}
   .daypill.rest{background:var(--status-rest); color:#fff; border-color:transparent;}
 
@@ -497,7 +497,7 @@
   .wcell.bye{background:none; border-style:dashed;}
   .dbadge{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:4px; color:#fff; background:var(--status-inactive); cursor:help; letter-spacing:.02em;}
   .dbadge.out{background:var(--status-out);} .dbadge.doubtful{background:var(--status-doubtful);} .dbadge.questionable{background:var(--status-questionable); color:#2a2200;}
-  .dbadge.pr-dnp{background:var(--status-dnp);} .dbadge.pr-limited{background:var(--status-limited);} .dbadge.pr-full{background:var(--status-full);} .dbadge.pr-rest{background:var(--status-rest);}
+  .dbadge.pr-dnp{background:var(--status-dnp);} .dbadge.pr-limited{background:var(--status-limited); color:#2a2200;} .dbadge.pr-full{background:var(--status-full);} .dbadge.pr-rest{background:var(--status-rest);}
   .dbadge.win{background:var(--accent); color:var(--accent-contrast);} .dbadge.res{background:var(--text-muted);} .dbadge.news{background:var(--surface-alt); color:var(--text); border:1px solid var(--border);}
   .dps{color:var(--text-muted);}
   .dunav{margin-top:14px; padding:10px 12px; background:var(--surface); border:1px solid var(--border); border-radius:10px;}
@@ -510,7 +510,7 @@
   .mstrip{display:inline-flex; gap:2px; vertical-align:middle;}
   .mpill{width:15px; height:15px; border-radius:3px; display:inline-flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:8px; font-weight:700; color:var(--text-muted); background:var(--surface-alt); border:1px solid var(--border); cursor:help;}
   .mpill.full{background:var(--status-full); color:#fff; border-color:transparent;}
-  .mpill.limited{background:var(--status-limited); color:#fff; border-color:transparent;}
+  .mpill.limited{background:var(--status-limited); color:#2a2200; border-color:transparent;}
   .mpill.dnp{background:var(--status-dnp); color:#fff; border-color:transparent;}
   .mpill.rest{background:var(--status-rest); color:#fff; border-color:transparent;}
   .dpl{cursor:pointer; border-bottom:1px dotted var(--text-muted);}
@@ -2176,7 +2176,7 @@
           un.map(function(o){ var u = o.u, bd = injBadge(a, u[1]);
             return '<div class="dun"><div class="dname">'+(u[0]?'<span class="dnum">'+esc(u[0])+'</span>':'')+plink(a, u[1])+(u[4]?'<span class="upos">'+esc(u[4])+'</span>':'')+(bd || (u[2]?' <span class="lpill" title="Reserve list">'+esc(u[2])+'</span>':''))+(curUnit === "D" ? alignChip(a, u[1]) : '')+'</div><div class="dsnap">'+o.ss.html+(curUnit === "O" && /^(OT|OG|C|OL|G|T|LT|RT)$/.test(u[4]||'') ? olStrip(a, u[1], '') : '')+'</div></div>'; }).join('') + '</div>';
       }
-      html += '<p class="dmeta dlegend">Week cells = share of the team\'s '+(curUnit==="S"?'special-teams':curUnit==="O"?'offensive':'defensive')+' snaps that game (Wk '+DEPTH.weeks[0]+'–'+DEPTH.weeks[DEPTH.weeks.length-1]+'; – = bye; hover a cell for routes / blocking / pass-rush / coverage splits). Next to each name on this week\'s report: practice days (green = full, blue = limited, red = DNP, purple = rest, grey = not yet reported) plus OUT / DOUBT / QUES or his reserve list, live from the injury report. '+(curUnit==="O"?'Offensive line: the second row of cells shows which spot he played each week (LT / LG / C / RG / RT, TE = extra tight end); orange = not his listed spot, dashed = split between spots. ':'')+'Hover (or tap) any name for his full injury status'+(curUnit==="O"?' and, for linemen, his week-by-week line alignment':'')+(curUnit==="D"?' and, on defense, where he actually lines up (PFF alignment by week). An orange "plays …" tag means his real alignment doesn\'t match his '+(DEPTH.asof.src||'TwoDeep')+' spot':'')+'.</p>';
+      html += '<p class="dmeta dlegend">Week cells = share of the team\'s '+(curUnit==="S"?'special-teams':curUnit==="O"?'offensive':'defensive')+' snaps that game (Wk '+DEPTH.weeks[0]+'–'+DEPTH.weeks[DEPTH.weeks.length-1]+'; – = bye; hover a cell for routes / blocking / pass-rush / coverage splits). Next to each name on this week\'s report: practice days (green = full, yellow = limited, red = DNP, purple = rest, grey = not yet reported) plus OUT / DOUBT / QUES or his reserve list, live from the injury report. '+(curUnit==="O"?'Offensive line: the second row of cells shows which spot he played each week (LT / LG / C / RG / RT, TE = extra tight end); orange = not his listed spot, dashed = split between spots. ':'')+'Hover (or tap) any name for his full injury status'+(curUnit==="O"?' and, for linemen, his week-by-week line alignment':'')+(curUnit==="D"?' and, on defense, where he actually lines up (PFF alignment by week). An orange "plays …" tag means his real alignment doesn\'t match his '+(DEPTH.asof.src||'TwoDeep')+' spot':'')+'.</p>';
       out.innerHTML = html;
     }
     var startView = "injury"; try{ startView = localStorage.getItem("tpr_view") || "injury"; }catch(e){}
