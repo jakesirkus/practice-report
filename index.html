@@ -1988,6 +1988,8 @@
       Object.keys(ts).forEach(function(wk){ den += ts[wk][i] || 0; if(rec && rec.w[wk]) num += rec.w[wk][i] || 0; });
       return den ? Math.round(num * 100 / den) : null;
     }
+    function lastWk(a){ var w = DEPTH.weeks.filter(function(wk){ return !notPlayed(a, wk); }); return w.length ? w[w.length-1] : DEPTH.weeks[DEPTH.weeks.length-1]; }
+    function notPlayed(a, wk){ return !!(DEPTH.games && DEPTH.games[a] && DEPTH.games[a][wk] && !(DEPTH.team_snaps[a] || {})[wk]); }
     function weekStrip(a, rec, unit){
       var i = unit === "O" ? 0 : unit === "D" ? 1 : 2;
       var ts = DEPTH.team_snaps[a] || {};
@@ -2048,7 +2050,7 @@
       var isDB = /^(CB|S)$/.test(pos) || (role && /^(CNR|SLOT|FS)$/.test((role.exp||[])[0] || ""));
       var cols = (isDB ? DBORDER : FRONTORDER).slice();
       ["CNR","SLOT","BOX","FS","AGP","BGP","OVT","OUT","DL"].forEach(function(c){ if(cols.indexOf(c) < 0 && s[c] >= Math.max(3, tot * 0.02)) cols.push(c); });
-      var html = '<div class="pc-align"><div class="pc-ah"><span>Alignment · PFF Wk '+DEPTH.weeks[0]+'–'+DEPTH.weeks[DEPTH.weeks.length-1]+(ad.sa !== a ? ' (with '+esc(ad.sa)+')' : '')+'</span><span>'+tot+' def snaps</span></div>';
+      var html = '<div class="pc-align"><div class="pc-ah"><span>Alignment · PFF Wk '+DEPTH.weeks[0]+'–'+lastWk(ad.sa)+(ad.sa !== a ? ' (with '+esc(ad.sa)+')' : '')+'</span><span>'+tot+' def snaps</span></div>';
       html += '<div class="abar">' + cols.filter(function(c){ return s[c]; }).map(function(c){ return '<span class="a-'+c+'" style="width:'+(s[c]*100/tot).toFixed(1)+'%" title="'+c+': '+s[c]+'"></span>'; }).join('') + '</div>';
       html += '<div class="alegend">' + cols.filter(function(c){ return s[c]; }).map(function(c){ return '<span><i class="a-'+c+'"></i>'+c+' '+(s[c]*100/tot < 1 ? "<1" : Math.round(s[c]*100/tot))+'%</span>'; }).join('') + '</div>';
       var share = Math.round(ad.pr.n * 100 / tot);
@@ -2058,7 +2060,7 @@
       var ts = DEPTH.team_snaps[ad.sa] || {}, moves = [];
       html += '<table class="atable"><thead><tr><th>Wk</th><th>Snaps</th>' + cols.map(function(c){ return '<th>'+c+'</th>'; }).join('') + '</tr></thead><tbody>';
       DEPTH.weeks.forEach(function(wk){
-        if(!ts[wk]){ html += '<tr class="dnp"><td>'+wk+'</td><td colspan="'+(cols.length+1)+'">bye</td></tr>'; return; }
+        if(!ts[wk]){ if(notPlayed(ad.sa, wk)) return; html += '<tr class="dnp"><td>'+wk+'</td><td colspan="'+(cols.length+1)+'">bye</td></tr>'; return; }
         var o = ad.weeks[wk], v = ad.rec.w[wk] ? ad.rec.w[wk][1] || 0 : 0;
         if(!o || !v){ html += '<tr class="dnp"><td>'+wk+'</td><td colspan="'+(cols.length+1)+'">no defensive snaps</td></tr>'; return; }
         var wp = primaryOf(o), moved = v >= 15 && wp.c !== ad.pr.c && wp.n >= v * 0.4 && (wp.n / v - s[wp.c] / tot) >= 0.2;
@@ -2109,7 +2111,7 @@
       var od = olRec(a, name); if(!od) return "";
       var ts = DEPTH.team_snaps[od.sa] || {};
       return '<span class="wstrip pstrip">' + DEPTH.weeks.map(function(wk){
-        if(!ts[wk]) return '<span class="wcell bye" title="Week '+wk+': bye">–</span>';
+        if(!ts[wk]) return notPlayed(od.sa, wk) ? '' : '<span class="wcell bye" title="Week '+wk+': bye">–</span>';
         var v = od.rec.ol[wk]; if(!v) return '<span class="wcell" title="Week '+wk+': no snaps on the line">·</span>';
         var w = olWeek(v), code = OLC[w.pi], det = OLC.map(function(c, i){ return v[i] ? c + ' ' + v[i] : ''; }).filter(Boolean).join(', ');
         var cls = (listed && code !== listed ? ' off' : '') + (w.share < 0.8 ? ' split' : '');
@@ -2120,7 +2122,7 @@
       var od = olRec(a, name); if(!od) return "";
       var s = od.season, tot = od.tot, listed = olListed(a, name), ts = DEPTH.team_snaps[od.sa] || {};
       var cols = OLC.filter(function(c, i){ return i < 5 || s[i]; });
-      var html = '<div class="pc-align"><div class="pc-ah"><span>Line alignment · PFF Wk '+DEPTH.weeks[0]+'–'+DEPTH.weeks[DEPTH.weeks.length-1]+(od.sa !== a ? ' (with '+esc(od.sa)+')' : '')+'</span><span>'+tot+' snaps</span></div>';
+      var html = '<div class="pc-align"><div class="pc-ah"><span>Line alignment · PFF Wk '+DEPTH.weeks[0]+'–'+lastWk(od.sa)+(od.sa !== a ? ' (with '+esc(od.sa)+')' : '')+'</span><span>'+tot+' snaps</span></div>';
       html += '<div class="abar">' + OLC.map(function(c, i){ return s[i] ? '<span class="o-'+c+'" style="width:'+(s[i]*100/tot).toFixed(1)+'%" title="'+c+': '+s[i]+'"></span>' : ''; }).join('') + '</div>';
       html += '<div class="alegend">' + OLC.map(function(c, i){ return s[i] ? '<span><i class="o-'+c+'"></i>'+(c === "TE" ? "extra TE" : c)+' '+(s[i]*100/tot < 1 ? "<1" : Math.round(s[i]*100/tot))+'%</span>' : ''; }).join('') + '</div>';
       var share = Math.round(s[od.pi] * 100 / tot);
@@ -2128,7 +2130,7 @@
       var moves = [];
       html += '<table class="atable"><thead><tr><th>Wk</th><th>Snaps</th>' + cols.map(function(c){ return '<th>'+c+'</th>'; }).join('') + '</tr></thead><tbody>';
       DEPTH.weeks.forEach(function(wk){
-        if(!ts[wk]){ html += '<tr class="dnp"><td>'+wk+'</td><td colspan="'+(cols.length+1)+'">bye</td></tr>'; return; }
+        if(!ts[wk]){ if(notPlayed(od.sa, wk)) return; html += '<tr class="dnp"><td>'+wk+'</td><td colspan="'+(cols.length+1)+'">bye</td></tr>'; return; }
         var v = od.rec.ol[wk]; if(!v){ html += '<tr class="dnp"><td>'+wk+'</td><td colspan="'+(cols.length+1)+'">no snaps on the line</td></tr>'; return; }
         var w = olWeek(v), moved = w.tot >= 15 && w.pi !== od.pi && v[w.pi] >= w.tot * 0.4;
         if(moved) moves.push({wk: wk, c: OLC[w.pi], n: v[w.pi], v: w.tot});
