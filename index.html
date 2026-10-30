@@ -1992,7 +1992,7 @@
       var i = unit === "O" ? 0 : unit === "D" ? 1 : 2;
       var ts = DEPTH.team_snaps[a] || {};
       return '<span class="wstrip">' + DEPTH.weeks.map(function(wk){
-        if(!ts[wk]) return (DEPTH.games[a] && DEPTH.games[a][wk]) ? '<span class="wcell bye" title="Week '+wk+': not played yet">·</span>' : '<span class="wcell bye" title="Week '+wk+': bye">–</span>';
+        if(!ts[wk]) return (DEPTH.games[a] && DEPTH.games[a][wk]) ? '' : '<span class="wcell bye" title="Week '+wk+': bye">–</span>';
         var tot = ts[wk][i] || 0, v = rec && rec.w[wk] ? rec.w[wk][i] || 0 : 0;
         var pct = tot ? Math.round(v * 100 / tot) : 0;
         var lvl = pct >= 80 ? 4 : pct >= 55 ? 3 : pct >= 30 ? 2 : pct > 0 ? 1 : 0;
@@ -2230,7 +2230,8 @@
     function saveS(){ try{ localStorage.setItem("tpr_snaps", JSON.stringify({team: sTeam.value, unit: sUnit, group: sGroup})); }catch(e){} }
     function fillGames(){
       var a = sTeam.value, g = (DEPTH.games || {})[a] || {}, ts = DEPTH.team_snaps[a] || {}, keep = sGame.value;
-      sGame.innerHTML = '<option value="all">Season (Wk '+DEPTH.weeks[0]+'–'+DEPTH.weeks[DEPTH.weeks.length-1]+')</option>' + DEPTH.weeks.slice().reverse().map(function(wk){
+      var played = DEPTH.weeks.filter(function(wk){ return ts[wk] || !g[wk]; }), lastW = played.length ? played[played.length-1] : DEPTH.weeks[DEPTH.weeks.length-1];
+      sGame.innerHTML = '<option value="all">Season (Wk '+DEPTH.weeks[0]+'–'+lastW+')</option>' + played.slice().reverse().map(function(wk){
         var x = g[wk]; if(!x || !ts[wk]) return '<option value="'+wk+'" disabled>Wk '+wk+' — bye</option>';
         var res = (x[2] != null && x[3] != null) ? ' ('+(x[2] > x[3] ? 'W' : x[2] < x[3] ? 'L' : 'T')+' '+x[2]+'-'+x[3]+')' : '';
         return '<option value="'+wk+'">Wk '+wk+' '+x[1]+' '+x[0]+res+'</option>'; }).join('');
