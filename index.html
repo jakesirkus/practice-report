@@ -568,6 +568,36 @@
   .dsnap .pstrip{flex-basis:100%; display:flex;}
   .o-LT{background:#3f6fd1;} .o-LG{background:#2aa6a0;} .o-C{background:#d08a2e;} .o-RG{background:#8a63c9;} .o-RT{background:#c4473f;} .o-TE{background:#888;}
   .achip{display:inline-block; margin-left:4px; padding:0 5px; border-radius:4px; font-family:"IBM Plex Mono",monospace; font-size:10px; line-height:16px; border:1px solid rgba(224,150,30,.6); background:rgba(224,150,30,.14); color:var(--text); white-space:nowrap;}
+  .viewtabs{overflow-x:auto; scrollbar-width:none;}
+  .note p{overflow-wrap:anywhere;}
+  @media (max-width:560px){ .viewtab{font-size:16px; padding:8px 8px; white-space:nowrap;} .team-meta{white-space:normal;} }
+  #matchView{display:none;}
+  .match-mode #matchView{display:block;}
+  .match-mode .kpis, .match-mode .controls, .match-mode .section-title, .match-mode #divisions, .match-mode #emptyState, .match-mode #notes{display:none !important;}
+  #matchGame{padding:8px 10px; border:1px solid var(--border); border-radius:7px; background:var(--surface); color:var(--text); font-family:inherit; font-size:14px; max-width:100%;}
+  .mgame{background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow); margin:0 0 16px; overflow:hidden;}
+  .mghead{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:4px 12px; padding:9px 14px; background:var(--surface-alt); border-bottom:1px solid var(--border);}
+  .mgtitle{font-family:"Barlow Condensed",sans-serif; font-size:21px; font-weight:700; letter-spacing:.01em;}
+  .mgtitle .at{color:var(--text-muted); font-weight:500; margin:0 7px;}
+  .mcols{display:grid; grid-template-columns:1fr 1fr;}
+  .mcol{padding:8px 14px 12px; min-width:0;}
+  .mcol + .mcol{border-left:1px solid var(--border);}
+  @media (max-width:760px){ .mcols{grid-template-columns:1fr;} .mcol + .mcol{border-left:0; border-top:1px solid var(--border);} }
+  .mthead{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:2px 8px; padding:2px 0 6px; border-bottom:2px solid var(--border);}
+  .mtname{font-family:"Barlow Condensed",sans-serif; font-size:17px; font-weight:700;}
+  .mcount{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--text-muted);}
+  .mrow{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:3px 10px; padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
+  .mrow.bench{opacity:.6;}
+  .mrow.ig{background:color-mix(in srgb, var(--status-out) 12%, transparent); box-shadow:inset 3px 0 0 var(--status-out); padding-left:7px;}
+  .mname{display:flex; flex-wrap:wrap; align-items:center; gap:3px 6px; font-weight:600; min-width:0;}
+  .mstat{display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:5px; margin-left:auto;}
+  .minj{font-size:11.5px; color:var(--text-muted);}
+  .mslot{font-family:"IBM Plex Mono",monospace; font-size:9.5px; font-weight:600; line-height:15px; padding:0 4px; border-radius:3px; border:1px solid var(--border); background:var(--chip-bg); color:var(--text); cursor:help;}
+  .mpct{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--text-muted); cursor:help;}
+  .mret{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--text-muted);}
+  .msub{font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted); margin:12px 0 0; padding-bottom:3px; border-bottom:1px solid var(--border);}
+  .mnone, .mhid{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--text-muted); padding:8px 0 0;}
+  .mcarry{font-size:11.5px; color:var(--text-muted); font-style:italic; padding:6px 0 2px;}
   .pc-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
   .pc-name{font-family:"Barlow Condensed",sans-serif; font-size:19px; font-weight:700;}
   .pc-team{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--text-muted); text-align:right;}
@@ -597,9 +627,17 @@
 <!--DEPTH_HTML-->
   <div class="viewtabs" role="tablist">
     <button class="viewtab" role="tab" data-view="injury" aria-selected="true">Injury report</button>
+    <button class="viewtab" role="tab" data-view="match" aria-selected="false">Matchups</button>
     <button class="viewtab" role="tab" data-view="depth" aria-selected="false">Depth charts</button>
     <button class="viewtab" role="tab" data-view="snaps" aria-selected="false">Snap counts</button>
   </div>
+  <section id="matchView">
+    <div class="dctrl">
+      <select id="matchGame" aria-label="Game"></select>
+      <button class="unitbtn" id="matchStarters" aria-pressed="true">Starters only</button>
+    </div>
+    <div id="matchBody"></div>
+  </section>
   <section id="snapView">
     <div class="dctrl">
       <select id="snapTeam" aria-label="Team"></select>
@@ -1791,10 +1829,12 @@
     function setView(v){
       document.body.classList.toggle("depth-mode", v === "depth");
       document.body.classList.toggle("snap-mode", v === "snaps");
+      document.body.classList.toggle("match-mode", v === "match");
       tabBtns.forEach(function(b){ b.setAttribute("aria-selected", b.dataset.view === v ? "true" : "false"); });
       try{ localStorage.setItem("tpr_view", v); }catch(e){}
       if(v === "depth") renderDepth();
       if(v === "snaps") renderSnaps();
+      if(v === "match") renderMatch();
     }
     tabBtns.forEach(function(b){ b.addEventListener("click", function(){ setView(b.dataset.view); }); });
 
@@ -2254,8 +2294,135 @@
     snapView.addEventListener("mouseout", function(ev){ var el = ev.target.closest(".dpl"); if(el && canHover && !(ev.relatedTarget && pop.contains(ev.relatedTarget))) hidePop(); });
     snapView.addEventListener("focusin", function(ev){ var el = ev.target.closest(".dpl"); if(el) showPop(el); });
     snapView.addEventListener("click", function(ev){ var el = ev.target.closest(".dpl"); if(el) showPop(el); });
+    // ================= MATCHUPS VIEW =================
+    var matchView = document.getElementById("matchView"), mGame = document.getElementById("matchGame"), mStartBtn = document.getElementById("matchStarters");
+    var mStarters = true, mSaved = "all";
+    try{ var ms = JSON.parse(localStorage.getItem("tpr_match") || "{}"); if(ms.st === false) mStarters = false; if(ms.g) mSaved = ms.g; }catch(e){}
+    function saveM(){ try{ localStorage.setItem("tpr_match", JSON.stringify({st: mStarters, g: mGame.value})); }catch(e){} }
+    // first-string slot on the depth chart (offense/defense; K and P on special teams)
+    var DSLOT = {};
+    function depthSlot(a, name){
+      if(!DSLOT[a]){ var m = {}, d = DEPTH.teams[a];
+        if(d) ["O","D","S"].forEach(function(u){ (d.units[u] || []).forEach(function(j){ j.p.forEach(function(p){
+          var s = String(p[2] || ""); if(!s || s === "PS" || s === "RES") return;
+          var k = nkey(p[1]), e = {u: u, j: j.j, s: s, st: /^\D+1$/.test(s) && (u !== "S" || /^(PK|PT)$/.test(j.j))}, cur = m[k];
+          if(!cur || (e.st && !cur.st) || (e.st === cur.st && cur.u === "S" && u !== "S")) m[k] = e; }); }); });
+        DSLOT[a] = m; }
+      return findIn(DSLOT[a], name);
+    }
+    // share of offensive or defensive snaps in the games he played this season (falls back to his old team after a trade)
+    function shareOf(a, name){
+      var rec = snapRec(a, name), sa = a;
+      if(!rec){ var k = nkey(name), hits = Object.keys(DEPTH.snaps).filter(function(t){ return t !== a && DEPTH.snaps[t][k] && !onRoster(t, k); });
+        if(hits.length === 1){ sa = hits[0]; rec = DEPTH.snaps[sa][k]; } }
+      if(!rec || !rec.w) return null;
+      var ts = DEPTH.team_snaps[sa] || {}, best = null;
+      [0, 1].forEach(function(ui){ var n = 0, d = 0, g = 0;
+        Object.keys(rec.w).forEach(function(wk){ var v = rec.w[wk][ui] || 0; if(v > 0 && ts[wk] && ts[wk][ui]){ n += v; d += ts[wk][ui]; g++; } });
+        if(g && (!best || n > best.n)) best = {ui: ui, n: n, pct: Math.round(100 * n / d), g: g, from: sa !== a ? sa : ""}; });
+      var st = 0; Object.keys(rec.w).forEach(function(wk){ st += rec.w[wk][2] || 0; });
+      if(best) best.stSnaps = st; else if(st) best = {ui: 2, n: st, pct: null, g: 0, stSnaps: st, from: sa !== a ? sa : ""};
+      return best;
+    }
+    function isStarter(o){
+      if(o.ds && o.ds.st) return true;
+      var p = String(o.pos || "").toUpperCase();
+      if(/^(K|PK|P)$/.test(p)) return !!(o.sh && o.sh.stSnaps);
+      return !!(o.sh && o.sh.pct !== null && o.sh.pct >= 50 && (o.sh.g >= 2 || o.sh.pct >= 65));
+    }
+    function lastPr(d){ d = d || {}; return d.f || d.t || d.w || ""; }
+    var PR_RANK = {dnp: 4, limited: 5, rest: 7, full: 8};
+    function rankOf(o, t){
+      if(o.kind === "r") return 20;
+      if(o.kind === "w") return 3;
+      var gs = o.p[4];
+      if(gs === "out") return 0;
+      if(t.carry) return 9;
+      if(gs === "doubtful") return 1;
+      if(gs === "questionable") return 2;
+      return PR_RANK[lastPr(o.p[3])] || 9;
+    }
+    function matchRows(a){
+      var t = REPORT.teams[a], rows = [];
+      (t.players || []).forEach(function(p){ var d = p[3] || {}, noInj = !p[2] || p[2] === "—";
+        if(noInj && !p[4] && !(d.w || d.t || d.f)) return;
+        rows.push({n: p[0], pos: p[1], inj: p[2], kind: "p", p: p}); });
+      (t.reserve || []).forEach(function(r){ rows.push({n: r[0], pos: r[1], inj: r[2], kind: /WINDOW/.test(r[3]) ? "w" : "r", r: r}); });
+      rows.forEach(function(o){ o.ds = depthSlot(a, o.n); o.sh = shareOf(a, o.n); o.st = isStarter(o); o.rank = rankOf(o, t); });
+      rows.sort(function(x, y){ return (x.rank - y.rank) || ((y.st ? 1 : 0) - (x.st ? 1 : 0)) || (((y.sh && y.sh.pct) || 0) - ((x.sh && x.sh.pct) || 0)); });
+      return rows;
+    }
+    function mRow(a, o){
+      var chips = '';
+      if(o.ds && o.ds.st) chips += '<span class="mslot" title="'+esc((DEPTH.teams[a] && DEPTH.teams[a].upd ? 'Ourlads' : 'Depth chart')+': first string at '+o.ds.j)+'">'+esc(o.ds.s)+'</span>';
+      if(o.sh && o.sh.pct !== null) chips += '<span class="mpct" title="'+esc('Share of '+(o.sh.ui ? 'defensive' : 'offensive')+' snaps in the '+o.sh.g+' game'+(o.sh.g === 1 ? '' : 's')+' he played this season'+(o.sh.from ? ' (with '+o.sh.from+')' : ''))+'">'+o.sh.pct+'%'+(o.sh.from ? ' w/ '+esc(o.sh.from) : '')+'</span>';
+      var inj = o.inj && o.inj !== "—" ? '<span class="minj">'+esc(o.inj)+'</span>' : '';
+      var ret = o.kind === "r" && o.r[4] ? '<span class="mret">'+esc(o.r[4] === "Season" ? "out for season" : o.r[4])+'</span>' : '';
+      return '<div class="mrow'+(igHit(a, o.n) ? ' ig' : '')+(o.st ? '' : ' bench')+'"><div class="mname">'+plink(a, o.n)+'<span class="upos">'+esc(o.pos)+'</span>'+chips+'</div>' +
+        '<div class="mstat">'+inj+injBadge(a, o.n)+ret+'</div></div>';
+    }
+    function mCount(rows){
+      var c = {out: 0, doubtful: 0, questionable: 0};
+      rows.forEach(function(o){ if(o.kind === "p" && c[o.p[4]] !== undefined) c[o.p[4]]++; });
+      var parts = []; if(c.out) parts.push(c.out+' out'); if(c.doubtful) parts.push(c.doubtful+' doubtful'); if(c.questionable) parts.push(c.questionable+' questionable');
+      return parts.join(' · ');
+    }
+    function mCol(a){
+      var t = REPORT.teams[a], all = matchRows(a), rows = mStarters ? all.filter(function(o){ return o.st; }) : all;
+      var act = rows.filter(function(o){ return o.kind !== "r"; }), res = rows.filter(function(o){ return o.kind === "r"; });
+      var hidden = all.length - rows.length, cnt = mCount(rows);
+      var html = '<div class="mcol"><div class="mthead"><span class="mtname">'+esc(t.name)+'</span><span class="mcount">'+(cnt || (t.carry ? 'no report yet' : 'no game designations yet'))+'</span></div>';
+      if(t.carry) html += '<div class="mcarry">'+esc(t.carry.split(/;|--/)[0].trim())+'. Rows below are from the last report.</div>';
+      html += act.length ? act.map(function(o){ return mRow(a, o); }).join('') : '<div class="mnone">'+(mStarters ? 'No starters on the report.' : 'Nobody on the report.')+'</div>';
+      if(res.length) html += '<div class="msub">Reserve lists</div>' + res.map(function(o){ return mRow(a, o); }).join('');
+      if(hidden) html += '<div class="mhid">'+hidden+' backup'+(hidden === 1 ? '' : 's')+' hidden</div>';
+      return html + '</div>';
+    }
+    function kick(day){
+      var d = String(day), m = d.match(/(\d{1,2})\/(\d{1,2})/), tm = d.match(/(\d{1,2}):(\d{2})/), h = tm ? +tm[1] : 13, mi = tm ? +tm[2] : 0;
+      if(h < 9) h += 12;
+      var mo = m ? +m[1] : 12; if(mo < 7) mo += 12;
+      return (m ? mo * 100 + +m[2] : 9999) * 10000 + h * 100 + mi;
+    }
+    function matchGames(){
+      var games = [], byes = [];
+      Object.keys(REPORT.teams).forEach(function(a){
+        var t = REPORT.teams[a], o = String(t.opp || "");
+        if(/^BYE/i.test(o)){ byes.push(a); return; }
+        var m = o.match(/^@\s*([A-Z]{2,3})/); if(!m || !REPORT.teams[m[1]]) return;
+        var h = REPORT.teams[m[1]], site = (o.match(/\(([^)]+)\)/) || [])[1] || "";
+        games.push({id: a + "-" + m[1], away: a, home: m[1], day: String(h.day || t.day).split(" · ")[0], site: site, k: kick(h.day || t.day)});
+      });
+      games.sort(function(x, y){ return (x.k - y.k) || (x.away < y.away ? -1 : 1); });
+      return {games: games, byes: byes.sort()};
+    }
+    function fillMatchGames(){
+      var G = matchGames(), keep = mGame.value || mSaved;
+      mGame.innerHTML = '<option value="all">All '+esc(REPORT.week)+' games ('+G.games.length+')</option>' + G.games.map(function(g){ return '<option value="'+g.id+'">'+g.away+' @ '+g.home+' · '+esc(g.day.replace(/\s*\(.*$/, ''))+'</option>'; }).join('');
+      if([].some.call(mGame.options, function(o){ return o.value === keep; })) mGame.value = keep;
+    }
+    function renderMatch(){
+      noInact = false;
+      var G = matchGames(), sel = mGame.value || "all", list = sel === "all" ? G.games : G.games.filter(function(g){ return g.id === sel; });
+      var html = '<div class="dhead"><div><span class="dteam">'+esc(REPORT.week)+' matchups</span> <span class="dmeta">'+(mStarters ? 'starting-caliber players only' : 'everyone on the report')+'</span></div><div class="dmeta">Updated '+esc(REPORT.updated.split(" · ")[0])+'</div></div>';
+      html += list.map(function(g){
+        return '<div class="mgame"><div class="mghead"><span class="mgtitle">'+esc(g.away)+'<span class="at">@</span>'+esc(g.home)+'</span><span class="dmeta">'+esc(g.day)+(g.site && !/^\d/.test(g.site) && g.day.indexOf(g.site) < 0 ? ' · '+esc(g.site) : '')+'</span></div>' +
+          '<div class="mcols">'+mCol(g.away)+mCol(g.home)+'</div></div>';
+      }).join('');
+      if(sel === "all" && G.byes.length) html += '<p class="dmeta">On bye: '+G.byes.map(function(a){ return esc(REPORT.teams[a].name); }).join(', ')+'.</p>';
+      html += '<p class="dmeta dlegend">Starting caliber = first string on the depth chart, or 50%+ of his unit\'s snaps in the games he has played this season (K and P count if they have kicked this year). The chip shows the depth-chart slot, the % is his snap share. Practice boxes run oldest to newest; hover or tap a name for the full injury notes, quotes and history.</p>';
+      document.getElementById("matchBody").innerHTML = html;
+    }
+    fillMatchGames();
+    mStartBtn.setAttribute("aria-pressed", mStarters ? "true" : "false");
+    mGame.addEventListener("change", function(){ saveM(); renderMatch(); });
+    mStartBtn.addEventListener("click", function(){ mStarters = !mStarters; mStartBtn.setAttribute("aria-pressed", mStarters ? "true" : "false"); saveM(); renderMatch(); });
+    matchView.addEventListener("mouseover", function(ev){ var el = ev.target.closest(".dpl"); if(el && canHover) showPop(el); });
+    matchView.addEventListener("mouseout", function(ev){ var el = ev.target.closest(".dpl"); if(el && canHover && !(ev.relatedTarget && pop.contains(ev.relatedTarget))) hidePop(); });
+    matchView.addEventListener("focusin", function(ev){ var el = ev.target.closest(".dpl"); if(el) showPop(el); });
+    matchView.addEventListener("click", function(ev){ var el = ev.target.closest(".dpl"); if(el) showPop(el); });
     var startView = "injury"; try{ startView = localStorage.getItem("tpr_view") || "injury"; }catch(e){}
-    setView(startView === "depth" || startView === "snaps" ? startView : "injury");
+    setView(startView === "depth" || startView === "snaps" || startView === "match" ? startView : "injury");
   })();
 /*DEPTH_VIEW_END*/
 })();
