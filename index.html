@@ -320,6 +320,8 @@
     background:var(--chip-bg); color:var(--text-muted);
   }
   .hsrc.news{background:var(--accent); color:var(--accent-contrast);}
+  .ntag{display:inline; padding:1px 5px; margin:0 2px 0 0; border-radius:4px; background:color-mix(in srgb, var(--accent) 13%, transparent); color:var(--accent); font:600 0.82em/1.6 "IBM Plex Mono",ui-monospace,monospace; letter-spacing:.02em; white-space:normal; box-decoration-break:clone; -webkit-box-decoration-break:clone;}
+  .ntag-hot{background:color-mix(in srgb, var(--status-out) 13%, transparent); color:var(--status-out);}
   .htext{font-size:12.5px; line-height:1.45; color:var(--text); max-width:62ch;}
 
   .pnote a.srclink{color:var(--accent); font-family:"IBM Plex Mono", monospace; font-size:11px; text-decoration:underline; text-underline-offset:2px; white-space:normal;}
@@ -1623,6 +1625,20 @@
     return HIST_ALIAS[n] || n;
   }
   function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  // ---- note headlines (MON:, SUNDAY:, IN-GAME (Wk 9):, WEEK 10 REPORT (...) --, FINAL IN-GAME STATUS: ...) get a highlighted tag ----
+  var NTAG_RE = /(?<![\w'’.&-])((?:[A-Z][A-Z0-9'’\/&-]+)(?:\s+(?:[A-Z][A-Z0-9'’\/&-]+|\d{1,2}(?:\/\d{1,2})?|@|vs\.?))*(?:\s*\((?:[^()]|\([^()]*\))*\))?(?:\s+(?:[A-Z][A-Z0-9'’\/&-]+|\d{1,2}\/\d{1,2}))*)(\s*:(?![\/\d])|\s+--(?=\s))/g;
+  var NTAG_HOT = /IN-GAME|LEFT GAME|DID NOT RETURN|RULED OUT|^OUT\b|INACTIVE|PLACED ON IR|TO IR\b|SEASON-ENDING|TRADED|RELEASED|WAIVED/;
+  function tagNotes(html){
+    return String(html == null ? "" : html).replace(/(<a\b[\s\S]*?<\/a>)|(<[^>]+>)|([^<]+)/g, function(m, a, tg, txt){
+      if(!txt) return m;
+      return txt.replace(NTAG_RE, function(mm, t, sep){
+        if(t.replace(/[^A-Z]/g, "").length < 2 || /^(II|III|IV|V|JR|SR|AM|PM|ET|AM ET|PM ET)$/.test(t)) return mm;
+        var tail = sep.replace(/^\s+/, "");
+        return '<span class="ntag' + (NTAG_HOT.test(t) ? ' ntag-hot' : '') + '">' + t + (tail === ':' ? ':' : ' –') + '</span>';
+      }).replace(/(<span class="ntag[^"]*">FINAL IN-GAME STATUS:<\/span>)\s*([A-Z][A-Z \-]*[A-Z](?:\s*\([^)]*\))?)/g, function(mm, s, v){ return s.replace('">', ' ntag-hot">').replace('</span>', ' ' + v + '</span>'); });
+    });
+  }
   function fmtET(iso){
     try{
       return new Date(iso).toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}) + " ET";
@@ -1634,7 +1650,7 @@
       return '<div class="hitem"><div class="hmeta"><span class="hdate">'+esc(fmtET(e[0]))+'</span>'+
         '<span class="hsrc'+(isNews?' news':'')+'">'+esc(isNews ? e[2] : "Report")+'</span>'+
         (isNews ? '' : '<span class="hdate">'+esc(e[2])+'</span>')+'</div>'+
-        '<div class="htext">'+esc(e[3])+'</div></div>';
+        '<div class="htext">'+tagNotes(esc(e[3]))+'</div></div>';
     }).join("");
   }
 
@@ -1732,7 +1748,7 @@
               '</div>'+
             '</div>'+
             missedHtml(r[7])+
-            (note ? '<div class="pnote">'+note+'</div>' : '')+
+            (note ? '<div class="pnote">'+tagNotes(note)+'</div>' : '')+
           '</td>';
         attachHistory(row, name, abbr);
         tbody.appendChild(row);
@@ -1803,7 +1819,7 @@
                 '<div class="pstatus">'+dayPillsHtml(days, t.dayLabels)+gamePill+'</div>'+
               '</div>'+
               missedHtml(p[6])+
-              (note ? '<div class="pnote">'+note+'</div>' : '')+
+              (note ? '<div class="pnote">'+tagNotes(note)+'</div>' : '')+
             '</td>';
           var hist = (typeof HISTORY !== "undefined" && (HISTORY[histKey(name)+"|"+abbr] || HISTORY[histKey(name)])) || [];
           if(hist.length){
@@ -1861,7 +1877,7 @@
   REPORT.notes.forEach(function(n){
     var el = document.createElement("div");
     el.className = "note";
-    el.innerHTML = '<span class="tag">'+n.team+'</span><p>'+n.text+'</p><div class="src">'+n.src+'</div>';
+    el.innerHTML = '<span class="tag">'+n.team+'</span><p>'+tagNotes(n.text)+'</p><div class="src">'+n.src+'</div>';
     notesEl.appendChild(el);
   });
 
@@ -2077,11 +2093,11 @@
       var hist = (typeof HISTORY !== "undefined" && (HISTORY[histKey(name)+"|"+a] || HISTORY[histKey(name)])) || [];
       var lab = cutFor(a).lab;
       var head = r.trimmed ? '<div class="pc-recent">Recent news · ' + lab + '</div>' : '';
-      var body = r.none ? '<div class="pc-note pnote pc-muted">No new notes ' + lab + '.</div>' : (r.html ? '<div class="pc-note pnote">' + r.html + '</div>' : '');
+      var body = r.none ? '<div class="pc-note pnote pc-muted">No new notes ' + lab + '.</div>' : (r.html ? '<div class="pc-note pnote">' + (typeof tagNotes === "function" ? tagNotes(r.html) : r.html) + '</div>' : '');
       var more = '';
       if(r.trimmed || hist.length){
         more = '<button type="button" class="pc-more" aria-expanded="false">' + (r.trimmed ? 'Full note' + (hist.length ? ' &amp; history (' + hist.length + ' update' + (hist.length === 1 ? '' : 's') + ')' : '') : 'History (' + hist.length + ' update' + (hist.length === 1 ? '' : 's') + ')') + '</button>' +
-          '<div class="pc-full" hidden>' + (r.trimmed && note ? '<div class="pc-sub">Full note</div><div class="pc-note pnote">' + note + '</div>' : '') +
+          '<div class="pc-full" hidden>' + (r.trimmed && note ? '<div class="pc-sub">Full note</div><div class="pc-note pnote">' + (typeof tagNotes === "function" ? tagNotes(note) : note) + '</div>' : '') +
           (hist.length ? '<div class="pc-sub">History · latest ' + esc(fmtET(hist[hist.length-1][0])) + '</div><div class="pc-histlist">' + historyHtml(hist) + '</div>' : '') + '</div>';
       }
       return head + body + more;
