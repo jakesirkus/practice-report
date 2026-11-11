@@ -1941,6 +1941,9 @@
       var n = String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[.'’"]/g,"").replace(/\b(jr|sr|ii|iii|iv|v)\b/g,"").replace(/-/g," ").replace(/\s+/g," ").trim();
       return NALIAS[n] || n;
     }
+    // snap records are keyed by plain normalized names at build time; re-key them with nkey() so nickname aliases
+    // (e.g. Vega Ioane -> Olaivavega Ioane, Bam Knight -> Zonovan Knight) resolve to the same record
+    Object.keys(DEPTH.snaps || {}).forEach(function(t){ var m = DEPTH.snaps[t], o = {}; Object.keys(m).forEach(function(k){ var nk2 = nkey(m[k].n || k); if(!o[nk2]) o[nk2] = m[k]; }); DEPTH.snaps[t] = o; });
     // Fallback name matching is strict: same last name AND a compatible first name
     // (same name, a 3+ letter prefix like Cam/Camryn, a known nickname, or initials like JT).
     var NICK = {riq:"tariq", drew:"andrew", kiko:"francisco", mike:"michael", rob:"robert", bob:"robert", andy:"andres", gabe:"gabriel", jake:"jacob", juju:"julius", que:"quandarrius", johnny:"jerzhan", tony:"anthony", tom:"thomas", bill:"william", dan:"daniel", nate:"nathan", zeke:"ezekiel", sam:"samuel", alex:"alexander", nick:"nicholas", matt:"matthew", chris:"christopher"};
