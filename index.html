@@ -2089,7 +2089,7 @@
     function obadge(a, name){
       var o = outHit(a, name); return o ? '<span class="obadge" title="'+esc(o)+'">O</span>' : '';
     }
-    function plink(a, name){ return '<span class="dpl'+(igHit(a, name) ? ' ig' : '')+'" tabindex="0" role="button" data-a="'+esc(a)+'" data-n="'+esc(name)+'">'+esc(name)+'</span>' + obadge(a, name); }
+    function plink(a, name){ return '<span class="dpl'+'" tabindex="0" role="button" data-a="'+esc(a)+'" data-n="'+esc(name)+'">'+esc(name)+'</span>' + obadge(a, name); }
     var GSLABEL = {out:"OUT", doubtful:"DOUBTFUL", questionable:"QUESTIONABLE", inactive:"INACTIVE"};
     function unavTag(a, name){ var d = DEPTH.teams[a]; if(!d) return ""; var u = (d.unav||[]).filter(function(x){ return nkey(x[1]) === nkey(name); })[0]; return u && u[2] ? u[2] : ""; }
     // ---- "recent news only" for the depth-chart card: drop note text that was already there 7+ days ago ----
@@ -2430,7 +2430,7 @@
       var num = pl[0], name = pl[1], ss = snapSummary(a, name, unit, pl[3]);
       var lr = String(pl[2] || '').replace(/\d+$/, ''), olS = unit === "O" && /^(LT|LG|C|RG|RT)$/.test(lr) ? olStrip(a, name, lr) : ''
       if(!olS && unit === "O" && skExpected(lr)) olS = skStrip(a, name, lr);
-      return '<td class="dcell'+(igHit(a, name) ? ' ig' : '')+'"><div class="dname">' + (num ? '<span class="dnum">'+esc(num)+'</span>' : '') + plink(a, name) + injBadge(a, name) + (unit === "D" ? alignChip(a, name) : '') + '</div>' +
+      return '<td class="dcell'+'"><div class="dname">' + (num ? '<span class="dnum">'+esc(num)+'</span>' : '') + plink(a, name) + injBadge(a, name) + (unit === "D" ? alignChip(a, name) : '') + '</div>' +
         '<div class="dsnap">' + ss.html + olS + '</div></td>';
     }
 
@@ -2470,7 +2470,7 @@
       if(un.length){
         html += '<div class="dunav"><div class="reserve-head"><span>Unavailable · reserve lists · sorted by season snap share</span><span class="rcount">'+un.length+'</span></div>' +
           un.map(function(o){ var u = o.u, bd = injBadge(a, u[1]);
-            return '<div class="dun'+(igHit(a, u[1]) ? ' ig' : '')+'"><div class="dname">'+(u[0]?'<span class="dnum">'+esc(u[0])+'</span>':'')+plink(a, u[1])+(u[4]?'<span class="upos">'+esc(u[4])+'</span>':'')+(bd || (u[2]?' <span class="lpill" title="Reserve list">'+esc(u[2])+'</span>':''))+(curUnit === "D" ? alignChip(a, u[1]) : '')+'</div><div class="dsnap">'+o.ss.html+(curUnit === "O" && /^(OT|OG|C|OL|G|T|LT|RT)$/.test(u[4]||'') ? olStrip(a, u[1], '') : '')+'</div></div>'; }).join('') + '</div>';
+            return '<div class="dun"><div class="dname">'+(u[0]?'<span class="dnum">'+esc(u[0])+'</span>':'')+plink(a, u[1])+(u[4]?'<span class="upos">'+esc(u[4])+'</span>':'')+(bd || (u[2]?' <span class="lpill" title="Reserve list">'+esc(u[2])+'</span>':''))+(curUnit === "D" ? alignChip(a, u[1]) : '')+'</div><div class="dsnap">'+o.ss.html+(curUnit === "O" && /^(OT|OG|C|OL|G|T|LT|RT)$/.test(u[4]||'') ? olStrip(a, u[1], '') : '')+'</div></div>'; }).join('') + '</div>';
       }
       html += '<p class="dmeta dlegend">Week cells = share of the team\'s '+(curUnit==="S"?'special-teams':curUnit==="O"?'offensive':'defensive')+' snaps that game (Wk '+DEPTH.weeks[0]+'–'+DEPTH.weeks[DEPTH.weeks.length-1]+'; – = bye; hover a cell for routes / blocking / pass-rush / coverage splits). Next to each name on this week\'s report: practice days (green = full, yellow = limited, red = DNP, purple = rest, grey = not yet reported) plus OUT / DOUBT / QUES or his reserve list, live from the injury report. '+(curUnit==="O"?'Offensive line: the second row of cells shows which spot he played each week (LT / LG / C / RG / RT, TE = extra tight end); orange = not his listed spot, dashed = split between spots. Running backs, receivers and tight ends: the second row shows where he ran most of his routes each week (WD = wide, SL = slot, IL = inline, BF = backfield; PFF); orange = not where his depth-chart job usually lines up (wide for outside WRs, slot for the slot WR, inline for TE, backfield for RB), dashed = no spot had 60% of his routes, · = no routes or no PFF data that game (hover for the counts). ':'')+''+'<span class="obadge" style="margin:0 3px 0 0">O</span>= ruled out: this week\'s OUT designation or expected to miss time (hover for details). '+(DEPTH.inact ? '<span class="dbadge lastin">INACTIVE</span> = missed his last game (inactive for '+esc(DEPTH.inact.label)+', or out the last game he could have played). ' : '')+(DEPTH.ingame ? '<span class="dbadge igb">LEFT</span> = left his '+esc(DEPTH.ingame.label)+' game with an injury (hover to see whether he returned; as of '+esc(DEPTH.ingame.asof)+'). ' : '')+'Hover (or tap) any name for his full injury status'+(curUnit==="O"?' and, for linemen, his week-by-week line alignment':'')+(curUnit==="D"?' and, on defense, where he actually lines up (PFF alignment by week). An orange "plays …" tag means his real alignment doesn\'t match his '+(DEPTH.asof.src||'TwoDeep')+' spot':'')+'.</p>';
       out.innerHTML = html;
@@ -2616,7 +2616,7 @@
       if(o.sh && o.sh.pct !== null) chips += '<span class="mpct" title="'+esc('Share of '+(o.sh.ui ? 'defensive' : 'offensive')+' snaps in the '+o.sh.g+' game'+(o.sh.g === 1 ? '' : 's')+' he played this season'+(o.sh.from ? ' (with '+o.sh.from+')' : ''))+'">'+o.sh.pct+'%'+(o.sh.from ? ' w/ '+esc(o.sh.from) : '')+'</span>';
       var inj = o.inj && o.inj !== "—" ? '<span class="minj">'+esc(o.inj)+'</span>' : '';
       var ret = o.kind === "r" && o.r[4] ? '<span class="mret">'+esc(o.r[4] === "Season" ? "out for season" : o.r[4])+'</span>' : '';
-      return '<div class="mrow'+(igHit(a, o.n) ? ' ig' : '')+(o.st ? '' : ' bench')+'"><div class="mname">'+plink(a, o.n)+'<span class="upos">'+esc(o.pos)+'</span>'+chips+'</div>' +
+      return '<div class="mrow'+(o.st ? '' : ' bench')+'"><div class="mname">'+plink(a, o.n)+'<span class="upos">'+esc(o.pos)+'</span>'+chips+'</div>' +
         '<div class="mstat">'+inj+injBadge(a, o.n)+ret+'</div></div>';
     }
     function mCount(rows){
