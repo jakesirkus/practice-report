@@ -2458,6 +2458,9 @@
       noInact = !!(DEPTH.inact && sGame.value !== "all" && String(sGame.value) !== String(DEPTH.inact.wk));
       var a = sTeam.value, cfg = SCOLS[sUnit], ui = UI[sUnit], m = DEPTH.snaps[a] || {}, ts = DEPTH.team_snaps[a] || {};
       var weeks = sGame.value === "all" ? DEPTH.weeks.filter(function(wk){ return ts[wk]; }) : [sGame.value];
+      var hasX = function(wk){ return Object.keys(m).some(function(k){ var r = m[k]; return r.x && r.x[wk] && r.x[wk].some(function(v){ return v; }); }); };
+      var pfrW = weeks.filter(function(wk){ return !hasX(wk); });
+      var srcTxt = !pfrW.length ? 'PFF' : pfrW.length === weeks.length ? 'Pro Football Reference (snap counts only)' : 'PFF + Pro Football Reference (Wk '+pfrW.join(', ')+')';
       var teamTot = weeks.reduce(function(s, wk){ return s + ((ts[wk] || [])[ui] || 0); }, 0);
       var rows = [];
       Object.keys(m).forEach(function(k){ var r = m[k], vals = cfg.cols.map(function(){ return 0; });
@@ -2465,7 +2468,7 @@
           cfg.cols.forEach(function(c, i){ if(c[1]) vals[i] += +(c[1](rw, wk) || 0); }); });
         if(!vals[0]) return; vals[1] = teamTot ? Math.round(vals[0] * 1000 / teamTot) / 10 : 0;
         rows.push({ n: r.n, pos: (r.pos || "").toUpperCase(), v: vals }); });
-      var head = '<div class="dhead"><div><span class="dteam">'+esc(REPORT.teams[a].name)+'</span> <span class="dmeta">'+({O: "Offense", D: "Defense", S: "Special teams"})[sUnit]+' · '+esc(sGame.options[sGame.selectedIndex] ? sGame.options[sGame.selectedIndex].text : '')+'</span></div><div class="dmeta">Team '+({O: "offensive", D: "defensive", S: "special-teams"})[sUnit]+' snaps: '+teamTot+' · source: PFF</div></div>';
+      var head = '<div class="dhead"><div><span class="dteam">'+esc(REPORT.teams[a].name)+'</span> <span class="dmeta">'+({O: "Offense", D: "Defense", S: "Special teams"})[sUnit]+' · '+esc(sGame.options[sGame.selectedIndex] ? sGame.options[sGame.selectedIndex].text : '')+'</span></div><div class="dmeta">Team '+({O: "offensive", D: "defensive", S: "special-teams"})[sUnit]+' snaps: '+teamTot+' · source: '+srcTxt+'</div></div>';
       if(!rows.length){ document.getElementById("snapBody").innerHTML = head + '<p class="dmeta">No snaps recorded.</p>'; return; }
       var sortI = sSort === null ? 0 : sSort;
       rows.sort(function(x, y){ return (y.v[sortI] - x.v[sortI]) || (y.v[0] - x.v[0]); });
@@ -2481,7 +2484,7 @@
         var groups = {}; rows.forEach(function(r){ var g = cfg.order.indexOf(r.pos) >= 0 ? r.pos : "OTHER"; (groups[g] = groups[g] || []).push(r); });
         cfg.order.concat(["OTHER"]).forEach(function(g){ if(!groups[g]) return; html += '<tr class="poshead"><td colspan="'+(cfg.cols.length + 1)+'">'+(cfg.gname[g] || "Other")+'</td></tr>' + groups[g].map(rowHtml).join(''); });
       } else html += rows.map(rowHtml).join('');
-      html += '</tbody></table></div><p class="dmeta dlegend">Snap counts from PFF charting'+(sGame.value === "all" ? ', summed over the season' : ' for this game')+'. Snap % = share of the team\'s '+({O: "offensive", D: "defensive", S: "special-teams"})[sUnit]+' snaps. '+(sUnit === "D" ? 'Alignment = where he lined up at the snap (DL = on the line; BOX, FS = deep safety, SLOT, CNR = wide corner); DL alignment splits his line snaps into A-gap, B-gap, over the tackle and outside the tackle. ' : sUnit === "O" ? 'Receiver alignment = where he lined up on pass plays (wide, slot, inline at TE); line alignment = which OL spot he played (TE = extra tight end). ' : 'Phase columns split special-teams snaps by unit. ')+'Highlighted = his most frequent alignment. Click a column header to sort'+(cfg.order ? '; click "Player" to go back to position groups' : '')+'. Hover a name for injury status and alignment details.</p>';
+      html += '</tbody></table></div><p class="dmeta dlegend">Snap counts from PFF charting'+(pfrW.length ? ' (Week '+pfrW.join(', ')+' from Pro Football Reference box scores: snap counts only, so the role and alignment columns are blank for that game)' : '')+(sGame.value === "all" ? ', summed over the season' : ' for this game')+'. Snap % = share of the team\'s '+({O: "offensive", D: "defensive", S: "special-teams"})[sUnit]+' snaps. '+(sUnit === "D" ? 'Alignment = where he lined up at the snap (DL = on the line; BOX, FS = deep safety, SLOT, CNR = wide corner); DL alignment splits his line snaps into A-gap, B-gap, over the tackle and outside the tackle. ' : sUnit === "O" ? 'Receiver alignment = where he lined up on pass plays (wide, slot, inline at TE); line alignment = which OL spot he played (TE = extra tight end). ' : 'Phase columns split special-teams snaps by unit. ')+'Highlighted = his most frequent alignment. Click a column header to sort'+(cfg.order ? '; click "Player" to go back to position groups' : '')+'. Hover a name for injury status and alignment details.</p>';
       var out = document.getElementById("snapBody"); out.innerHTML = html;
       out.querySelectorAll("th[data-si]").forEach(function(th){ th.addEventListener("click", function(){ var si = +th.dataset.si; sSort = si < 0 ? null : si; renderSnaps(); }); });
     }
